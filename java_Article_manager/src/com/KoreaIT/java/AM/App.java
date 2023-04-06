@@ -9,9 +9,13 @@ import com.KoreaIT.java.dto.Article;
 
 public class App {
 	List<Article> articles;
+	List<Article> articlesFind;
+	List<Article> articles0;
 
 	App() {
 		articles = new ArrayList<>();
+		articles0 = new ArrayList<>();
+		articlesFind = articles;
 	}
 
 	public void run() {
@@ -55,19 +59,43 @@ public class App {
 
 				articles.add(article);
 
-			} else if (cmd.equals("article list")) {
+			} else if (cmd.startsWith("article list")) {
+				cmd = cmd.substring(12).trim();
+
+				
+				
 				if (articles.size() == 0) {
 					System.out.println("게시글이 없습니다");
 					continue;
 				}
+				
+				if (cmd.length() > 0) {
+					articlesFind = articles0;
+					for (int i = 0; i < articles.size(); i++) {
+						Article article = articles.get(i);
+						if (article.title.contains(cmd)) {
+							articlesFind.add(article);
+						}
+					}
 
+				}
+				
+				
+				if (articlesFind.size() == 0) {
+					System.out.println("검색어와 일치하는 게시글이 없습니다.");
+					continue;
+				}
+				
+				System.out.println(articlesFind.size());
 				System.out.println("조회수	|	번호	|	제목	|	날짜");
-
-				for (int i = articles.size() - 1; i >= 0; --i) {
-					Article article = articles.get(i);
+				
+				for (int i = articlesFind.size() - 1; i >= 0; --i) {
+					Article article = articlesFind.get(i);
 					System.out.printf("%d	|	%d	|	%s	|	%s\n", article.hit, article.id, article.title,
 							article.now);
 				}
+				articles0.clear();
+				articlesFind = articles;
 
 			} else if (cmd.startsWith("article detail ")) {
 				String[] cmdBits = cmd.split(" ");
