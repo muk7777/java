@@ -6,16 +6,15 @@ import java.util.Scanner;
 
 import com.KoreaIT.java.AM.util.Util;
 import com.KoreaIT.java.dto.Article;
+import com.KoreaIT.java.dto.Member;
 
 public class App {
 	List<Article> articles;
-	List<Article> articlesFind;
-	List<Article> articles0;
+	List<Member> members;
 
 	App() {
 		articles = new ArrayList<>();
-		articles0 = new ArrayList<>();
-		articlesFind = articles;
+		members = new ArrayList<>();
 	}
 
 	public void run() {
@@ -24,8 +23,10 @@ public class App {
 		Scanner sc = new Scanner(System.in);
 
 		makeTestData();
+		makeTestData2();
 
 		int lastArticleId = 3;
+		int lastMemberId = 0;
 
 		while (true) {
 			System.out.println("명령어 : ");
@@ -41,39 +42,78 @@ public class App {
 				break;
 			}
 
-			if (cmd.equals("article write")) {
+			if (cmd.equals("member join")) {
+				int id = ++lastMemberId;
+				lastMemberId = id;
+
+				String loginId = null;
+				
+				while (true) {
+					System.out.printf("로그인 아이디 : ");
+					loginId = sc.nextLine();
+					
+					if (isLoginIdDup(loginId) == false) {
+						System.out.printf("%s은(는)이미 사용중인 아이디입니다.\n", loginId);
+						continue;
+					}
+					
+					System.out.printf("%s은(는) 사용 가능한 아이디 입니다.\n", loginId);
+					break;
+				}
+				
+				String loginPw = null;
+				while (true) {
+					System.out.printf("로그인 비밀번호 : ");
+					loginPw = sc.nextLine();
+					System.out.printf("로그인 비밀번호 확인 : ");
+					String loginPwCheck = sc.nextLine();
+					if (loginPwCheck.equals(loginPw) == false) {
+						System.out.println("비밀번호를 다시 입력해주세요.");
+						continue;
+					}
+					break;
+				}
+				
+				System.out.printf("이름 : ");
+				String name = sc.nextLine();
+
+				Member member = new Member(id, Util.getNowDateStr(), loginId, loginPw, name);
+				
+				members.add(member);
+
+				System.out.printf("%s 회원님 환영합니다.\n", name);
+				
+			} else if (cmd.equals("article write")) {
 				int id = ++lastArticleId;
 				lastArticleId = id;
-
-				System.out.println("제목을 입력해주세요.");
+				
+				String regDate = Util.getNowDateStr();
+				System.out.printf("제목 : ");
 				String title = sc.nextLine();
-				System.out.println("제목 :" + title);
-
-				System.out.println("내용을 입력해주세요.");
+				System.out.printf("내용 : ");
 				String body = sc.nextLine();
-				System.out.println("내용 :" + body);
 
 				System.out.printf("%d번글이 생성되었습니다.\n", id);
 
-				Article article = new Article(id, Util.getNowDateStr(), title, body);
+				Article article = new Article(id, regDate, title, body);
 
 				articles.add(article);
 
 			} else if (cmd.startsWith("article list")) {
-				cmd = cmd.substring(12).trim();
-
-				
 				
 				if (articles.size() == 0) {
 					System.out.println("게시글이 없습니다");
 					continue;
 				}
 				
-				if (cmd.length() > 0) {
-					articlesFind = articles0;
-					for (int i = 0; i < articles.size(); i++) {
-						Article article = articles.get(i);
-						if (article.title.contains(cmd)) {
+				String searchKeyward = cmd.substring(12).trim();
+				List<Article> articlesFind = articles;
+				
+				if (searchKeyward.length() > 0) {
+					articlesFind = new ArrayList<>();
+					
+					for (Article article : articles) {
+						if (article.title.contains(searchKeyward)) {
 							articlesFind.add(article);
 						}
 					}
@@ -87,15 +127,13 @@ public class App {
 				}
 				
 				System.out.println(articlesFind.size());
-				System.out.println("조회수	|	번호	|	제목	|	날짜");
+				System.out.println("번호	|	조회수	|	제목	|	날짜");
 				
 				for (int i = articlesFind.size() - 1; i >= 0; --i) {
 					Article article = articlesFind.get(i);
-					System.out.printf("%d	|	%d	|	%s	|	%s\n", article.hit, article.id, article.title,
+					System.out.printf("%d	|	%d	|	%s	|	%s\n", article.id, article.hit, article.title,
 							article.now);
 				}
-				articles0.clear();
-				articlesFind = articles;
 
 			} else if (cmd.startsWith("article detail ")) {
 				String[] cmdBits = cmd.split(" ");
@@ -181,19 +219,37 @@ public class App {
 	}
 
 	private void makeTestData() {
+		System.out.println("테스트를 위한 게시글 데이터를 생성합니다");
 		articles.add(new Article(1, Util.getNowDateStr(), "test1", "test1", 10));
 		articles.add(new Article(2, Util.getNowDateStr(), "test2", "test2", 15));
 		articles.add(new Article(3, Util.getNowDateStr(), "test3", "test3", 28));
+	}
+	
+	private void makeTestData2() {
+		System.out.println("테스트를 위한 회원 데이터를 생성합니다");
+		members.add(new Member(1, Util.getNowDateStr(), "test1", "test1", "test1"));
+		members.add(new Member(2, Util.getNowDateStr(), "test2", "test2", "test2"));
+		members.add(new Member(3, Util.getNowDateStr(), "test3", "test3", "test3"));
 	}
 
 	private Article getArticleById(int id) {
 		for (int i = 0; i < articles.size(); i++) {
 			Article article = articles.get(i);
+			
 			if (id == article.id) {
 				return article;
 			}
 		}
 		return null;
+	}
+	
+	private boolean isLoginIdDup(String loginId) {
+		for (Member member : members) {
+			if (member.loginId.equals(loginId)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
