@@ -11,10 +11,12 @@ import com.KoreaIT.java.dto.Member;
 public class App {
 	List<Article> articles;
 	List<Member> members;
+	Member loginedMember;
 
 	App() {
 		articles = new ArrayList<>();
 		members = new ArrayList<>();
+		this.loginedMember = null;
 	}
 
 	public void run() {
@@ -26,7 +28,7 @@ public class App {
 		makeTestData2();
 
 		int lastArticleId = 3;
-		int lastMemberId = 0;
+		int lastMemberId = 3;
 
 		while (true) {
 			System.out.println("명령어 : ");
@@ -43,6 +45,12 @@ public class App {
 			}
 
 			if (cmd.equals("member join")) {
+				
+				if (isLogined()) {
+					System.out.println("로그아웃 후 이용해주세요.");
+					continue;
+				}
+				
 				int id = ++lastMemberId;
 				lastMemberId = id;
 
@@ -82,8 +90,50 @@ public class App {
 				members.add(member);
 
 				System.out.printf("%s 회원님 환영합니다.\n", name);
+			} else if (cmd.equals("member login")) {
+				
+				if (isLogined()) {
+					System.out.println("로그아웃 후 이용해주세요.");
+					continue;
+				}
+				
+				System.out.printf("로그인 아이디 : ");
+				String loginId = sc.nextLine();
+				System.out.printf("로그인 패스워드 : ");
+				String loginPw = sc.nextLine();
+				
+				Member member = getMemberById(loginId);
+				
+				if (member == null) {
+					System.out.printf("%s(은)는 존재하지 않는 아이디 입니다.\n", loginId);
+					continue;
+				}
+				
+				
+				if (member.loginPw.equals(loginPw) == false) {
+					System.out.println("비밀번호가 틀렸습니다.");
+					continue;
+				}
+				
+				this.loginedMember = member;
+				System.out.printf("로그인 성공 : %s 회원님 환영합니다.\n", member.name);
+				
+			} else if (cmd.equals("member logout")) {
+				if (isLogined() == false) {
+					System.out.println("로그인 상태가 아닙니다.");
+					continue;
+				}
+				
+				this.loginedMember = null;
+				System.out.println("로그아웃 되었습니다.");
 				
 			} else if (cmd.equals("article write")) {
+				
+				if (isLogined() == false) {
+					System.out.println("로그인 상태가 아닙니다.");
+					continue;
+				}
+				
 				int id = ++lastArticleId;
 				lastArticleId = id;
 				
@@ -95,7 +145,7 @@ public class App {
 
 				System.out.printf("%d번글이 생성되었습니다.\n", id);
 
-				Article article = new Article(id, regDate, title, body);
+				Article article = new Article(id, regDate, title, body, loginedMember.id);
 
 				articles.add(article);
 
@@ -127,17 +177,17 @@ public class App {
 				}
 				
 				System.out.println(articlesFind.size());
-				System.out.println("번호	|	조회수	|	제목	|	날짜");
+				System.out.println("번호	|	조회수	|	제목	|	날짜	|	작성자번호");
 				
 				for (int i = articlesFind.size() - 1; i >= 0; --i) {
 					Article article = articlesFind.get(i);
-					System.out.printf("%d	|	%d	|	%s	|	%s\n", article.id, article.hit, article.title,
-							article.now);
+					System.out.printf("%d	|	%d	|	%s	|	%s	|	%d\n", article.id, article.hit, article.title,
+							article.now, article.memberId);
 				}
 
 			} else if (cmd.startsWith("article detail ")) {
 				String[] cmdBits = cmd.split(" ");
-
+				
 				if (articles.size() == 0) {
 					System.out.println("게시글이 없습니다");
 					continue;
@@ -146,6 +196,7 @@ public class App {
 				int id = Integer.parseInt(cmdBits[2]);
 
 				Article foundArticle = getArticleById(id);
+				
 
 				if (foundArticle == null) {
 					System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
@@ -156,6 +207,7 @@ public class App {
 				System.out.println("== 게시물 상세보기 ==");
 				System.out.printf("조회수 : %d\n", foundArticle.hit);
 				System.out.printf("작성일자 : %s\n", foundArticle.now);
+				System.out.printf("작성자번호 : %d\n", foundArticle.memberId);
 				System.out.printf("번호 : %d\n", foundArticle.id);
 				System.out.printf("제목 : %s\n", foundArticle.title);
 				System.out.printf("내용 : %s\n", foundArticle.body);
@@ -171,9 +223,14 @@ public class App {
 				int id = Integer.parseInt(cmdBits[2]);
 
 				Article foundArticle = getArticleById(id);
-
+				
 				if (foundArticle == null) {
 					System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
+					continue;
+				}
+				
+				if (isAuthority(foundArticle.id) == false) {
+					System.out.println("권한이 없습니다.");
 					continue;
 				}
 
@@ -196,6 +253,11 @@ public class App {
 					System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
 					continue;
 				}
+				
+				if (isAuthority(foundArticle.id) == false) {
+					System.out.println("권한이 없습니다.");
+					continue;
+				}
 
 				System.out.println("== 게시물 수정하기 ==");
 				System.out.printf("수정할 제목 : ");
@@ -208,6 +270,7 @@ public class App {
 
 				foundArticle.title = title;
 				foundArticle.body = body;
+				System.out.printf("%d번 게시물이 수정되었습니다.\n", id);
 
 			} else {
 				System.out.printf("%s(은)는 존재하지 않는 명령어입니다.\n", cmd);
@@ -243,6 +306,14 @@ public class App {
 		return null;
 	}
 	
+	private Member getMemberById(String loginId) {
+		for (Member member : members) {
+			if (member.loginId.equals(loginId)) {
+				return member;
+			}
+		}
+		return null;
+	}
 	private boolean isLoginIdDup(String loginId) {
 		for (Member member : members) {
 			if (member.loginId.equals(loginId)) {
@@ -251,5 +322,14 @@ public class App {
 		}
 		return true;
 	}
+	
+	private boolean isLogined() {
+		return this.loginedMember != null;
+	}
+	
+	private boolean isAuthority(int memberId) {
+		return memberId == this.loginedMember.id;
+	}
+	
 
 }
