@@ -15,4 +15,8 @@ public class Member {
 		this.loginPw = loginPw;
 		this.name = name;
 	}
+	
+	public void increaseId() {
+		++this.id;
+	}
 }

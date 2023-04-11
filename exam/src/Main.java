@@ -6,39 +6,43 @@ public class Main {
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 		
-		int[][] arr = new int[20][20];
-		
-		for (int i = 0; i <= 19; i++) {
-			for (int j = 0; j <= 19; j++) {
-				arr[i][j] = 0;
+		int[][] arr = new int[10][10];
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				int num = sc.nextInt();
+				arr[i][j] = num; 
 			}
 		}
-		System.out.println("==1번==\n");
-		for (int i = 0; i <= 19; i++) {
-			for (int j = 0; j <= 19; j++) {
-				System.out.printf("%d ",arr[i][j]);
+		int y = 1;
+		int x = 1;
+		if (arr[y][x] != 2) {
+			while (true) {
+				arr[y][x] = 9;
+				if (arr[y][x + 1] == 0) {
+					++x;
+					continue;
+				} else if (arr[y][x + 1] == 1) {
+					if (arr[y + 1][x] == 0) {
+						++y;
+						continue;
+					} else if (arr[y + 1][x] == 1) {
+						break;
+					} else {
+						arr[y + 1][x] = 9;
+						break;
+					}
+				} else {
+					arr[y][x + 1] = 9;
+					break;
+				}
+				
 			}
-			System.out.println();
+		} else {
+			arr[y][x] = 9;
 		}
-		
-		System.out.println();
-		System.out.println("==2번==\n");
-		
-		
-		
-		
-		List<Integer>[] arr2 = new ArrayList[20]; 
-		
-		for (int i = 0; i <=19; i++) {
-			arr2[i] = new ArrayList<Integer>();
-			for (int j = 0; j <= 19; j++) {
-				arr2[i].add(0);
-			}
-		}
-		
-		for (int i = 0; i <=19; i++) {
-			for (int j = 0; j <= 19; j++) {
-				System.out.printf("%d ", arr2[i].get(j));
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				System.out.printf("%d ", arr[i][j]);
 			}
 			System.out.println();
 		}
